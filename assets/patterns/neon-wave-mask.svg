@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" preserveAspectRatio="none" fill="none">
+  <defs>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+    <path id="rise" d="M-170 980C135 755 290 1020 610 775S1020 230 1780 55"/>
+    <path id="lower" d="M-170 1040C135 815 320 1080 640 835S1050 290 1810 115"/>
+    <path id="upper" d="M-90 140C235-30 455 80 605 250S820 480 1100 355"/>
+  </defs>
+  <g stroke="white" stroke-width="8" opacity=".3" filter="url(#soft)">
+    <use href="#rise"/><use href="#lower"/><use href="#upper"/>
+  </g>
+  <g stroke="white" stroke-width="1.6">
+    <use href="#rise"/><use href="#lower"/><use href="#upper"/>
+  </g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200" preserveAspectRatio="none" fill="none">
+  <defs>
+    <filter id="halo" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3"/></filter>
+    <g id="orbits">
+      <ellipse cx="1000" cy="600" rx="1100" ry="650"/>
+      <ellipse cx="1000" cy="600" rx="830" ry="500"/>
+      <ellipse cx="1000" cy="600" rx="620" ry="370"/>
+    </g>
+  </defs>
+  <use href="#orbits" stroke="white" stroke-width="11" opacity=".24" filter="url(#halo)"/>
+  <use href="#orbits" stroke="white" stroke-width="1.35"/>
+  <ellipse cx="1000" cy="600" rx="965" ry="575" stroke="white" stroke-width="1" stroke-dasharray="2 20" opacity=".35"/>
+</svg>

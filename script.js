@@ -1,355 +1,313 @@
-const navToggle = document.querySelector(".nav-toggle");
-const siteNav = document.querySelector(".site-nav");
-if (navToggle && siteNav) {
-  const setNavigationOpen = (isOpen) => {
-    navToggle.setAttribute("aria-expanded", String(isOpen));
-    navToggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
-    siteNav.classList.toggle("is-open", isOpen);
-  };
+/* PMS Digital Solutions — native interactions for the Figma implementation. */
+(() => {
+  'use strict';
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  document.documentElement.classList.add('js');
 
-  navToggle.addEventListener("click", () => {
-    const expanded = navToggle.getAttribute("aria-expanded") === "true";
-    setNavigationOpen(!expanded);
+  const header = $('#site-header');
+  const menu = $('#mobile-menu');
+  const toggle = $('#menu-toggle');
+  const main = $('main');
+  const footer = $('footer');
+  const home = $('#home');
+  const headerProgress = $('#scroll-progress');
+  const servicesTrigger = $('.services-trigger');
+  const navLinks = $$('nav[aria-label="Primary"] a, #mobile-menu ul a');
+  const sections = $$('main > section[id]');
+  let menuOpen = false;
+  const serviceDropdowns = $$('[data-services-toggle]').map(button => ({button,panel:document.getElementById(button.getAttribute('aria-controls'))}));
+  function setServiceDropdown(which, open, focus = false) {
+    serviceDropdowns.forEach(({button,panel}) => {
+      const expanded = button.dataset.servicesToggle === which && open;
+      button.setAttribute('aria-expanded',String(expanded));
+      panel.hidden = !expanded;
+      if (expanded && focus) $('a',panel).focus();
+    });
+  }
+  serviceDropdowns.forEach(({button,panel}) => {
+    button.addEventListener('click',event=>{
+      const mouseHover = button.dataset.servicesToggle==='desktop' && event.detail>0 && matchMedia('(hover:hover)').matches;
+      setServiceDropdown(button.dataset.servicesToggle,mouseHover || button.getAttribute('aria-expanded')!=='true');
+    });
+    button.addEventListener('keydown',event=>{
+      if (event.key==='ArrowDown') {event.preventDefault();setServiceDropdown(button.dataset.servicesToggle,true,true);}
+    });
+    const wrapper=button.closest('.nav-services');
+    if (wrapper) {
+      wrapper.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse')setServiceDropdown('desktop',true);});
+      wrapper.addEventListener('pointerleave',()=>{if(!wrapper.contains(document.activeElement))setServiceDropdown('desktop',false);});
+      wrapper.addEventListener('focusout',event=>{if(!wrapper.contains(event.relatedTarget))setServiceDropdown('desktop',false);});
+    }
+  });
+  document.addEventListener('click',event=>{if(!event.target.closest('.nav-services'))setServiceDropdown('desktop',false);});
+  function setMenu(open, restoreFocus = true) {
+    menuOpen = open;
+    setServiceDropdown('desktop',false);
+    header.classList.toggle('over-hero', !open && home.getBoundingClientRect().bottom > header.offsetHeight + 90);
+    menu.classList.toggle('is-open', open);
+    menu.setAttribute('aria-hidden', String(!open));
+    menu.inert = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    toggle.innerHTML = open
+      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg>';
+    $$('a', menu).forEach(a => a.tabIndex = open && !a.closest('[hidden]') ? 0 : -1);
+    document.body.style.overflow = open ? 'hidden' : '';
+    main.inert = open;
+    footer.inert = open;
+    if (open) {menu.scrollTop = 0;$('a', menu).focus({preventScroll:true});}
+    else if (restoreFocus) toggle.focus({preventScroll:true});
+  }
+  toggle.addEventListener('click', () => setMenu(!menuOpen));
+  document.addEventListener('keydown', event => {
+    const expanded=serviceDropdowns.find(({panel})=>!panel.hidden);
+    if(event.key==='Escape' && expanded) {
+      event.preventDefault();setServiceDropdown('desktop',false);expanded.button.focus();return;
+    }
+    if (!menuOpen) return;
+    if (event.key === 'Escape') {event.preventDefault();setMenu(false);return;}
+    if (event.key !== 'Tab') return;
+    const focusable = [toggle, ...$$('a,button', menu).filter(el=>el.tabIndex>=0 && !el.closest('[hidden]'))];
+    const index = focusable.indexOf(document.activeElement);
+    if (event.shiftKey && index <= 0) {event.preventDefault();focusable.at(-1).focus();}
+    else if (!event.shiftKey && (index === focusable.length - 1 || index < 0)) {event.preventDefault();toggle.focus();}
+  });
+  const desktop = matchMedia('(min-width:1024px)');
+  desktop.addEventListener('change', e => {if (e.matches && menuOpen) setMenu(false, false);});
+
+  function go(id, focus = false) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    setServiceDropdown('desktop',false);
+    if (menuOpen) setMenu(false, false);
+    history.replaceState(null, '', `#${id}`);
+    target.scrollIntoView({behavior: reduced.matches ? 'instant' : 'smooth', block:'start'});
+    if (focus) {target.tabIndex = -1;target.focus({preventScroll:true});}
+  }
+  document.addEventListener('click', event => {
+    const anchor = event.target.closest('a[href^="#"]');
+    if (anchor) {event.preventDefault();go(anchor.getAttribute('href').slice(1), true);}
+    const scroll = event.target.closest('[data-scroll]');
+    if (scroll) go(scroll.dataset.scroll, true);
+    const quote = event.target.closest('[data-quote-type]');
+    if (quote) {
+      const details = $('#details');
+      $('#type').value = quote.dataset.quoteType;
+      const existing = details.value.replace(/^(Package|Interested in):[^\n]*(?:\n\n)?/, '').trim();
+      details.value = quote.dataset.quoteNote + '\n\n' + existing;
+      $('#enquiry-status').hidden = true;
+      go('contact');
+    }
   });
 
-  siteNav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      setNavigationOpen(false);
+  const revealObserver = new IntersectionObserver(entries => entries.forEach(entry => {
+    if (entry.isIntersecting) {entry.target.classList.add('in');revealObserver.unobserve(entry.target);}
+  }), {threshold:0.12, rootMargin:'0px 0px -6% 0px'});
+  function reveal(root = document) {$$('.reveal:not(.in)', root).forEach(el => revealObserver.observe(el));}
+  reveal();
+
+  function startEffects() {
+    document.documentElement.classList.add('effects-ready');
+    const waveObserver = new IntersectionObserver(entries => entries.forEach(entry => {
+      entry.target.classList.toggle('waves-active', entry.isIntersecting);
+      if (entry.isIntersecting && entry.target.classList.contains('marquee-wrap')) {
+        $$('img[loading="lazy"]',entry.target).forEach(image => image.loading = 'eager');
+      }
+    }), {rootMargin:'80px 0px'});
+    $$('.ambient-waves').forEach(layer => waveObserver.observe(layer.parentElement));
+    waveObserver.observe($('.marquee-wrap'));
+  }
+  const queueEffects = () => 'requestIdleCallback' in window
+    ? requestIdleCallback(startEffects, {timeout:1500}) : setTimeout(startEffects, 100);
+  if (document.readyState === 'complete') queueEffects();
+  else addEventListener('load', queueEffects, {once:true});
+
+  const serviceTabs = $$('[data-service]');
+  const servicePanels = [$('#service-panel').cloneNode(true), ...[1,2,3].map(index => $(`#service-template-${index}`).content.firstElementChild)];
+  function selectService(index, focus = false) {
+    serviceTabs.forEach((tab, i) => {
+      tab.setAttribute('aria-selected', String(i === index));tab.tabIndex = i === index ? 0 : -1;
+    });
+    $('#service-panel').replaceWith(servicePanels[index].cloneNode(true));
+    requestMeasure();
+    if (focus) serviceTabs[index].focus();
+  }
+  serviceTabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => selectService(i));
+    tab.addEventListener('keydown', event => {
+      let next = i;
+      if (['ArrowDown','ArrowRight'].includes(event.key)) next = (i + 1) % serviceTabs.length;
+      else if (['ArrowUp','ArrowLeft'].includes(event.key)) next = (i + serviceTabs.length - 1) % serviceTabs.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = serviceTabs.length - 1;
+      else return;
+      event.preventDefault();selectService(next, true);
     });
   });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && navToggle.getAttribute("aria-expanded") === "true") {
-      setNavigationOpen(false);
-      navToggle.focus();
-    }
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!siteNav.contains(event.target) && !navToggle.contains(event.target)) {
-      setNavigationOpen(false);
-    }
-  });
-
-  window.matchMedia("(min-width: 1025px)").addEventListener("change", () => {
-    setNavigationOpen(false);
-  });
-}
-
-const floatingServicesMenus = document.querySelectorAll("[data-services-menu]");
-
-floatingServicesMenus.forEach((menu) => {
-  const trigger = menu.querySelector(".floating-services-trigger");
-  const links = menu.querySelectorAll(".floating-services-dropdown a");
-
-  if (!trigger) {
-    return;
+  const pricingContent = $('#pricing-content');
+  const pricingTemplates = {biz:document.createElement('template'),port:$('#pricing-template-port')};
+  pricingTemplates.biz.content.append(...[...pricingContent.childNodes].map(node => node.cloneNode(true)));
+  const currencyControl = $('.currency-control');
+  const currencyButtons = $$('[data-currency]');
+  const currencyNote = $('#currency-note');
+  const currencyReference = $('#currency-reference');
+  // Dated BOJ reference; JMD remains the canonical price. No live rate request blocks rendering.
+  const usdJmdRate = Number(currencyControl.dataset.usdJmdRate);
+  const priceNumber = new Intl.NumberFormat('en-US', {maximumFractionDigits:0});
+  let pricingCurrency = 'JMD';
+  function usdEstimate(text) {
+    return text.replace(/J\$([\d,]+)/g, (_, amount) => 'US$' + priceNumber.format(Number(amount.replaceAll(',', '')) / usdJmdRate));
   }
-
-  const setMenuOpen = (isOpen) => {
-    menu.classList.toggle("is-open", isOpen);
-    trigger.setAttribute("aria-expanded", String(isOpen));
-  };
-
-  trigger.addEventListener("click", () => {
-    setMenuOpen(trigger.getAttribute("aria-expanded") !== "true");
-  });
-
-  links.forEach((link) => {
-    link.addEventListener("click", () => setMenuOpen(false));
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!menu.contains(event.target)) {
-      setMenuOpen(false);
-    }
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && trigger.getAttribute("aria-expanded") === "true") {
-      setMenuOpen(false);
-      trigger.focus();
-    }
-  });
-});
-
-const yearTarget = document.querySelectorAll("#year");
-yearTarget.forEach((node) => {
-  node.textContent = new Date().getFullYear();
-});
-
-const currencySelect = document.querySelector("[data-currency-select]");
-const currencyStatus = document.querySelector("[data-currency-status]");
-const convertiblePrices = document.querySelectorAll("[data-price-min]");
-const CURRENCY_STORAGE_KEY = "preferred-currency";
-const currencyOptions = {
-  JMD: { label: "Jamaican dollars", symbol: "JMD $", rate: 1, rounding: 1 },
-  USD: { label: "US dollars", symbol: "US$", rate: 190 / 30000, rounding: 1 },
-  EUR: { label: "euros", symbol: "€", rate: 0.00545, rounding: 1 },
-  GBP: { label: "British pounds", symbol: "£", rate: 0.0047, rounding: 1 },
-  JPY: { label: "Japanese yen", symbol: "¥", rate: 0.93, rounding: 100 },
-  INR: { label: "Indian rupees", symbol: "₹", rate: 0.552, rounding: 100 },
-};
-
-const formatConvertedAmount = (amount, currency) => {
-  const { rate, rounding, symbol } = currencyOptions[currency];
-  const convertedAmount = amount * rate;
-  const roundedAmount = Math.round(convertedAmount / rounding) * rounding;
-  return `${symbol}${roundedAmount.toLocaleString("en-US")}`;
-};
-
-const updateDisplayedCurrency = (currency, persist = true) => {
-  const selectedCurrency = currencyOptions[currency] ? currency : "JMD";
-
-  convertiblePrices.forEach((price) => {
-    const minimum = Number(price.dataset.priceMin);
-    const maximum = price.dataset.priceMax ? Number(price.dataset.priceMax) : null;
-    const prefix = price.dataset.pricePrefix || "";
-    const suffix = price.dataset.priceSuffix || "";
-    const plus = price.dataset.pricePlus === "true" ? "+" : "";
-    const minimumLabel = formatConvertedAmount(minimum, selectedCurrency);
-    const rangeLabel = maximum
-      ? `${minimumLabel} - ${formatConvertedAmount(maximum, selectedCurrency)}`
-      : `${minimumLabel}${plus}`;
-
-    price.textContent = `${prefix}${rangeLabel}${suffix}`;
-  });
-
-  if (currencyStatus) {
-    currencyStatus.textContent = selectedCurrency === "JMD"
-      ? "Prices shown in Jamaican dollars."
-      : `Approximate prices shown in ${currencyOptions[selectedCurrency].label}.`;
+  function renderPricingCurrency() {
+    const usd = pricingCurrency === 'USD';
+    $$('[data-price]', pricingContent).forEach(price => {
+      price.dataset.jmd ||= price.textContent;
+      price.textContent = usd ? usdEstimate(price.dataset.jmd) : price.dataset.jmd;
+    });
+    $$('[data-quote-note]', pricingContent).forEach(button => {
+      button.dataset.quoteJmd ||= button.dataset.quoteNote;
+      const original = button.dataset.quoteJmd;
+      const amount = original.match(/\(([^)]+)\)/)?.[1];
+      button.dataset.quoteNote = usd && amount ? `${original} · Approx. ${usdEstimate(amount)}` : original;
+    });
+    currencyButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.currency === pricingCurrency)));
+    currencyNote.textContent = usd ? 'Approx. USD · Based on JMD prices.' : 'Prices in Jamaican dollars (JMD).';
+    currencyReference.hidden = !usd;
   }
-
-  if (currencySelect) {
-    currencySelect.value = selectedCurrency;
-  }
-
-  if (persist) {
-    try {
-      localStorage.setItem(CURRENCY_STORAGE_KEY, selectedCurrency);
-    } catch {
-      // Keep the selected currency active if browser storage is unavailable.
-    }
-  }
-};
-
-if (currencySelect && convertiblePrices.length) {
-  let savedCurrency = "JMD";
-
   try {
-    savedCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY) || "JMD";
-  } catch {
-    // Use Jamaican dollars when browser storage is unavailable.
-  }
+    if (localStorage.getItem('pms-pricing-currency') === 'USD') pricingCurrency = 'USD';
+  } catch { /* Pricing remains usable when browser storage is unavailable. */ }
+  currencyControl.hidden = false;
+  renderPricingCurrency();
+  currencyButtons.forEach(button => button.addEventListener('click', () => {
+    pricingCurrency = button.dataset.currency;
+    renderPricingCurrency();
+    try { localStorage.setItem('pms-pricing-currency', pricingCurrency); } catch { /* Optional preference only. */ }
+    requestMeasure();
+  }));
+  $$('[data-pricing]').forEach(button => button.addEventListener('click', () => {
+    const tab = button.dataset.pricing;
+    $$('[data-pricing]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    pricingContent.replaceChildren(pricingTemplates[tab].content.cloneNode(true));
+    renderPricingCurrency();
+    reveal(pricingContent);
+    requestMeasure();
+  }));
+  $$('[data-filter]').forEach(button => button.addEventListener('click', () => {
+    const filter = button.dataset.filter;
+    $$('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    $$('[data-project-kind]').forEach(card => {
+      card.hidden = filter !== 'all' && card.dataset.projectKind !== filter;
+      if (!card.hidden) card.classList.add('in');
+    });
+    requestMeasure();
+  }));
 
-  updateDisplayedCurrency(savedCurrency, false);
-  currencySelect.addEventListener("change", (event) => {
-    updateDisplayedCurrency(event.target.value);
-  });
-}
-
-const queryParams = new URLSearchParams(window.location.search);
-const selectedType = queryParams.get("type");
-const selectedItem = queryParams.get("selected");
-const selectionNote = document.querySelector("[data-selection-note]");
-const whatsappHelper = document.querySelector("[data-whatsapp-helper]");
-const selectedInput = document.querySelector("[data-selected-item]");
-const selectedTypeInput = document.querySelector("[data-selected-type]");
-const messageField = document.querySelector('textarea[name="message"]');
-const nameField = document.querySelector('input[name="name"]');
-const emailField = document.querySelector('input[name="email"]');
-const whatsappLinks = document.querySelectorAll("[data-whatsapp-link]");
-
-const buildWhatsappMessage = () => {
-  const name = nameField?.value.trim() || "there";
-  const email = emailField?.value.trim();
-  const message = messageField?.value.trim();
-  const lines = ["Hello Prince-Mark,", ""];
-
-  if (selectedItem) {
-    if (selectedType === "project") {
-      lines.push(`I'm interested in your ${selectedItem} project.`);
-    } else {
-      const packageName = selectedItem.replace(/\s+package$/i, "");
-      lines.push(`I'm interested in your ${packageName} website package.`);
-    }
-  } else {
-    lines.push("I'm interested in working with you on a website project.");
-  }
-
-  lines.push("I'd like to get started and learn more about the next steps.");
-
-  if (email) {
-    lines.push(`My email address is ${email}.`);
-  }
-
-  if (message) {
-    lines.push("", "A few details about what I'm looking for:");
-    lines.push(message);
-  } else {
-    lines.push("I can also share a few details about what I'm looking for if needed.");
-  }
-
-  lines.push("", "Looking forward to your response, thank you.");
-
-  return lines.join("\n");
-};
-
-const syncWhatsappLinks = () => {
-  const text = encodeURIComponent(buildWhatsappMessage());
-  whatsappLinks.forEach((link) => {
-    link.href = `https://wa.me/18768205761?text=${text}`;
-  });
-};
-
-const updateWhatsappHelper = () => {
-  if (!whatsappHelper) {
-    return;
-  }
-
-  if (selectedItem) {
-    const label = selectedType === "project" ? "project" : "package";
-    whatsappHelper.textContent = `WhatsApp will open a ready-to-send message with your selected ${label} and any details you add to the form.`;
-    return;
-  }
-
-  whatsappHelper.textContent = "WhatsApp can open a ready-to-send message using your form details.";
-};
-
-if (selectionNote && selectedInput && selectedItem) {
-  const label = selectedType === "project" ? "Selected project" : "Selected package";
-  selectionNote.hidden = false;
-  selectionNote.textContent = `${label}: ${selectedItem}`;
-  selectedInput.value = selectedItem;
-  if (selectedTypeInput) {
-    selectedTypeInput.value = selectedType || "";
-  }
-
-}
-
-updateWhatsappHelper();
-
-if (nameField) {
-  nameField.addEventListener("input", syncWhatsappLinks);
-}
-
-if (emailField) {
-  emailField.addEventListener("input", syncWhatsappLinks);
-}
-
-if (messageField) {
-  messageField.addEventListener("input", syncWhatsappLinks);
-}
-
-syncWhatsappLinks();
-
-const triggerWhatsappSpark = (button) => {
-  if (!button) {
-    return;
-  }
-
-  button.classList.add("is-sparking");
-
-  for (let index = 0; index < 8; index += 1) {
-    const spark = document.createElement("span");
-    spark.className = "whatsapp-spark";
-    spark.style.setProperty("--spark-angle", `${index * 45}deg`);
-    button.appendChild(spark);
-
-    window.setTimeout(() => {
-      spark.remove();
-    }, 650);
-  }
-
-  window.setTimeout(() => {
-    button.classList.remove("is-sparking");
-  }, 320);
-};
-
-whatsappLinks.forEach((link) => {
-  link.addEventListener("click", () => {
-    triggerWhatsappSpark(link);
-  });
-});
-
-const contactForm = document.querySelector("[data-contact-form]");
-const submitButton = document.querySelector("[data-submit-button]");
-const formStatus = document.querySelector("[data-form-status]");
-
-if (contactForm) {
-  contactForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!nameField?.value.trim() || !emailField?.value.trim() || !messageField?.value.trim()) {
-      if (formStatus) {
-        formStatus.textContent = "Please complete your name, email, and message before sending.";
-      }
-      return;
-    }
-
-    if (window.location.protocol === "file:") {
-      if (formStatus) {
-        formStatus.textContent = "Email sending needs a local server or deployment so the Resend API route can run.";
-      }
-      return;
-    }
-
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = "Sending...";
-    }
-
-    if (formStatus) {
-      formStatus.textContent = "";
-    }
-
-    const payload = {
-      name: nameField.value.trim(),
-      email: emailField.value.trim(),
-      message: messageField.value.trim(),
-      selectedItem: selectedInput?.value || "",
-      selectedType: selectedTypeInput?.value || "",
+  const timeline = $('#process-timeline');
+  const steps = $$('[data-process-step]');
+  const timelineProgress = $('#process-progress');
+  let pending = false;
+  let needsMeasure = true;
+  let layout = {};
+  let activeSection = '';
+  let lastStep = -1;
+  function requestMeasure() {needsMeasure = true; requestScroll();}
+  function measureLayout() {
+    const scroll = window.scrollY;
+    const sectionBounds = sections.map(section => {
+      const bounds = section.getBoundingClientRect();
+      return {id:section.id,top:bounds.top + scroll,bottom:bounds.bottom + scroll};
+    });
+    const about = sectionBounds.find(section => section.id === 'about');
+    const timelineVisible = about.top < scroll + innerHeight * 2 && about.bottom > scroll - innerHeight;
+    const bounds = timelineVisible ? timeline.getBoundingClientRect() : {top:Infinity,height:1};
+    layout = {
+      height:document.documentElement.scrollHeight - innerHeight,
+      viewport:innerHeight,
+      header:header.offsetHeight,
+      homeBottom:home.getBoundingClientRect().bottom + scroll,
+      timelineTop:bounds.top + scroll,
+      timelineHeight:bounds.height,
+      sections:sectionBounds,
+      aboutTop:about.top,
+      aboutBottom:about.bottom,
+      timelineMeasured:timelineVisible,
     };
-
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+    needsMeasure = false;
+  }
+  function updateScroll() {
+    pending = false;
+    if (!needsMeasure && !layout.timelineMeasured && layout.aboutTop < scrollY + innerHeight * 2 && layout.aboutBottom > scrollY - innerHeight) needsMeasure = true;
+    if (needsMeasure) measureLayout();
+    const scroll = window.scrollY;
+    header.classList.toggle('is-scrolled', scroll > 24);
+    header.classList.toggle('over-hero', !menuOpen && layout.homeBottom - scroll > layout.header + 90);
+    headerProgress.style.transform = `scaleX(${layout.height > 0 ? scroll / layout.height : 0})`;
+    let active = 'home';
+    for (const section of layout.sections) if (section.top <= scroll + layout.viewport * .5) active = section.id;
+    if (active !== activeSection) {
+      activeSection = active;
+      if(active==='services'||active==='pricing')servicesTrigger.setAttribute('aria-current','location');else servicesTrigger.removeAttribute('aria-current');
+      navLinks.forEach(a => {
+        const location = active === 'pricing' && !a.closest('#mobile-menu') ? 'services' : active;
+        if (a.getAttribute('href') === `#${location}`) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Something went wrong while sending your message.");
-      }
-
-      contactForm.reset();
-      if (selectedInput) {
-        selectedInput.value = selectedItem || "";
-      }
-      if (selectedTypeInput) {
-        selectedTypeInput.value = selectedType || "";
-      }
-      if (selectionNote && selectedItem) {
-        selectionNote.hidden = false;
-      }
-      syncWhatsappLinks();
-
-      if (formStatus) {
-        formStatus.textContent = "Your message was sent successfully. I'll get back to you soon.";
-      }
-    } catch (error) {
-      if (formStatus) {
-        formStatus.textContent = error.message;
-      }
-    } finally {
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = "Send via Email";
-      }
     }
+    const progress = Math.min(1, Math.max(0, (scroll + layout.viewport * .62 - layout.timelineTop) / layout.timelineHeight));
+    if (layout.timelineTop < scroll + layout.viewport && layout.timelineTop + layout.timelineHeight > scroll) timelineProgress.style.transform = `scaleY(${progress})`;
+    const completed = reduced.matches ? steps.length - 1 : Math.floor((progress + .02) * (steps.length - 1));
+    if (completed !== lastStep) {lastStep = completed;steps.forEach((step, i) => step.dataset.done = String(i <= completed));}
+  }
+  function requestScroll() {if (!pending) {pending = true;requestAnimationFrame(updateScroll);}}
+  addEventListener('scroll', requestScroll, {passive:true});
+  addEventListener('resize', requestMeasure);
+  new ResizeObserver(requestMeasure).observe(document.body);
+  document.fonts.ready.then(requestMeasure);
+  reduced.addEventListener('change', () => {lastStep = -1; requestScroll();});
+  updateScroll();
+
+  const form = $('#enquiry-form');
+  const status = $('#enquiry-status');
+  const errorMessages = {name:'Please enter your name',email:'Please enter a valid email',type:'Please choose a project type',details:'Tell us a little about your project (at least 10 characters)'};
+  function clearError(field) {
+    field.setAttribute('aria-invalid','false');field.removeAttribute('aria-describedby');
+    document.getElementById(`${field.id}-err`)?.remove();status.hidden = true;
+  }
+  $$('input,select,textarea',form).forEach(field => field.addEventListener('input',()=>clearError(field)));
+  function validate() {
+    let first = null;
+    for (const field of $$('[required]',form)) {
+      clearError(field);
+      const value=field.value.trim();
+      const invalid = !value || (field.type==='email' && !/^\S+@\S+\.\S+$/.test(value)) || (field.id==='details' && value.length<10);
+      if (!invalid) continue;
+      const error=document.createElement('p');error.id=`${field.id}-err`;error.className='field-error';error.textContent=errorMessages[field.id];error.setAttribute('role','alert');
+      field.after(error);field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby',error.id);first ||= field;
+    }
+    first?.focus();return !first;
+  }
+  function enquiry() {
+    const values=Object.fromEntries(new FormData(form));
+    return {subject:`Project enquiry: ${values.type}${values.business?' - '+values.business:''}`,body:`Hello PMS Digital Solutions,\n\nName: ${values.name}\nBusiness: ${values.business||'-'}\nEmail: ${values.email}\nProject type: ${values.type}\nBudget: ${values.budget||'Not sure yet'}\n\nProject details:\n${values.details}`};
+  }
+  form.addEventListener('submit', event => {
+    event.preventDefault();if(!validate()) return;
+    const {subject,body}=enquiry();
+    location.href=`mailto:pmsdigitalsolutions63@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    status.textContent='Your email app should open with the enquiry. Review the draft and press send there. If no app opens, use WhatsApp or email pmsdigitalsolutions63@gmail.com directly.';status.hidden=false;
   });
-}
+  $('#whatsapp-enquiry').addEventListener('click', () => {
+    if(!validate()) return;
+    window.open(`https://wa.me/18768205761?text=${encodeURIComponent(enquiry().body)}`,'_blank','noopener,noreferrer');
+    status.textContent='Continue in WhatsApp to review and send your enquiry.';status.hidden=false;
+  });
+  const params=new URLSearchParams(location.search);
+  const selected=params.get('package')||params.get('service')||params.get('selected');
+  if(selected) {
+    $('#details').value=`Interested in: ${selected}\n\n`;
+    if(params.get('type')==='package' || params.has('package')) $('#type').value=/portfolio/i.test(selected)?'Portfolio website':'Business website';
+  }
+})();

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" preserveAspectRatio="none" fill="none">
+  <defs>
+    <linearGradient id="silk" x1="180" y1="1040" x2="1380" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3ce36e" stop-opacity=".02"/>
+      <stop offset=".5" stop-color="#7dff9e" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#48ec79" stop-opacity=".035"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="110" y1="920" x2="1450" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5eee82" stop-opacity=".06"/>
+      <stop offset=".55" stop-color="#95ffad" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#5fee85" stop-opacity=".09"/>
+    </linearGradient>
+  </defs>
+  <path d="M-130 460C165 180 450 610 790 470S1220 40 1730 190V275C1220 125 1090 450 790 540S165 260-130 545Z" fill="#000" fill-opacity=".2"/>
+  <path d="M-170 1110C135 885 355 1150 675 905S1085 360 1845 185V300C1150 475 1080 765 755 995S140 1025-170 1210Z" fill="#000" fill-opacity=".27"/>
+  <path d="M-190 1010C110 790 285 1060 600 815S1025 260 1790 85V250C1125 415 1040 680 680 920S120 1000-190 1160Z" fill="url(#silk)"/>
+  <g stroke="url(#edge)" stroke-width="1.2">
+    <path d="M-170 980C135 755 290 1020 610 775S1020 230 1780 55"/>
+    <path d="M-170 1000C135 775 300 1040 620 795S1030 250 1790 75"/>
+    <path d="M-170 1040C135 815 320 1080 640 835S1050 290 1810 115"/>
+    <path d="M-170 1110C135 885 355 1150 675 905S1085 360 1845 185"/>
+  </g>
+  <path d="M-90 115C240-55 465 55 620 225S830 455 1105 330" stroke="url(#edge)" stroke-width="1.2"/>
+  <path d="M-90 140C235-30 455 80 605 250S820 480 1100 355" stroke="url(#edge)"/>
+  <path d="M-90 175C230 5 445 115 590 285S810 515 1095 390" stroke="url(#edge)"/>
+  <path d="M-90 230C215 60 420 170 565 340S785 570 1070 445" stroke="url(#edge)" stroke-opacity=".55"/>
+</svg>
