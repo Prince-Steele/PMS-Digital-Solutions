@@ -126,18 +126,50 @@
   else addEventListener('load', queueEffects, {once:true});
 
   const serviceTabs = $$('[data-service]');
+  const serviceList = serviceTabs[0].parentElement;
+  const servicePanelHome = $('#service-panel').parentElement;
+  serviceList.classList.add('service-list');
+  servicePanelHome.classList.add('service-panel-home');
   const servicePanels = [$('#service-panel').cloneNode(true), ...[1,2,3].map(index => $(`#service-template-${index}`).content.firstElementChild)];
-  function selectService(index, focus = false) {
+  let selectedService = 0;
+  let mobileServiceOpen = false;
+  serviceTabs.forEach(tab => {
+    tab.lastElementChild.classList.add('service-meta');
+    tab.lastElementChild.insertAdjacentHTML('beforeend', '<svg class="service-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>');
+  });
+  function renderService() {
+    const mobile = !desktop.matches;
+    serviceList.setAttribute('role', mobile ? 'group' : 'tablist');
+    if (mobile) serviceList.removeAttribute('aria-orientation');
+    else serviceList.setAttribute('aria-orientation', 'vertical');
     serviceTabs.forEach((tab, i) => {
-      tab.setAttribute('aria-selected', String(i === index));tab.tabIndex = i === index ? 0 : -1;
+      const active = i === selectedService && (!mobile || mobileServiceOpen);
+      tab.dataset.active = String(active);
+      tab.tabIndex = mobile || i === selectedService ? 0 : -1;
+      tab.setAttribute('role', mobile ? 'button' : 'tab');
+      tab.removeAttribute(mobile ? 'aria-selected' : 'aria-expanded');
+      tab.setAttribute(mobile ? 'aria-expanded' : 'aria-selected', String(active));
     });
-    $('#service-panel').replaceWith(servicePanels[index].cloneNode(true));
+    const panel = servicePanels[selectedService].cloneNode(true);
+    panel.setAttribute('role', mobile ? 'region' : 'tabpanel');
+    panel.hidden = mobile && !mobileServiceOpen;
+    $('#service-panel').remove();
+    if (mobile) serviceTabs[selectedService].after(panel);
+    else servicePanelHome.append(panel);
+  }
+  function selectService(index, focus = false) {
+    if (!desktop.matches) mobileServiceOpen = selectedService !== index || !mobileServiceOpen;
+    selectedService = index;
+    renderService();
     requestMeasure();
     if (focus) serviceTabs[index].focus();
   }
+  renderService();
+  desktop.addEventListener('change', () => {renderService();requestMeasure();});
   serviceTabs.forEach((tab, i) => {
     tab.addEventListener('click', () => selectService(i));
     tab.addEventListener('keydown', event => {
+      if (!desktop.matches) return;
       let next = i;
       if (['ArrowDown','ArrowRight'].includes(event.key)) next = (i + 1) % serviceTabs.length;
       else if (['ArrowUp','ArrowLeft'].includes(event.key)) next = (i + serviceTabs.length - 1) % serviceTabs.length;

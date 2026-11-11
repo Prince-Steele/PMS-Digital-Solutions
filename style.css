@@ -3194,7 +3194,7 @@ nav[aria-label="Primary"] a:hover, nav[aria-label="Primary"] a[aria-current] {
   font-size: 20px;
 }
 
-[aria-selected="true"] .service-icon {
+[data-active="true"] .service-icon {
   color: #fff;
   background: #32634e;
 }
@@ -4460,7 +4460,7 @@ main > section:not(#home) {
   box-shadow: inset 0 1px #d8ffe412, 0 0 12px #3be47714;
 }
 
-.service-tab[aria-selected="true"] {
+.service-tab[data-active="true"] {
   --copy: #e7f7ec;
   --muted: #c7ddce;
   --strong-copy: #f1fff5;
@@ -4470,13 +4470,13 @@ main > section:not(#home) {
   box-shadow: 0 10px 24px #00000021, 0 0 18px #40ee7b1f;
 }
 
-.service-tab[aria-selected="true"] .service-icon {
+.service-tab[data-active="true"] .service-icon {
   color: #74ffa4;
   background: #09180f;
   border-color: #46b269;
 }
 
-.service-tab[aria-selected="true"]:after {
+.service-tab[data-active="true"]:after {
   content: "";
   pointer-events: none;
   background: #62f393;
@@ -4489,11 +4489,11 @@ main > section:not(#home) {
   box-shadow: 0 0 12px #50f48a59;
 }
 
-.service-tab[aria-selected="true"] > span:last-child {
+.service-tab[data-active="true"] > span:last-child {
   color: #7cf7a5;
 }
 
-.service-tab:not([aria-selected="true"]):hover {
+.service-tab:not([data-active="true"]):hover {
   border-color: #32a65c;
   box-shadow: 0 8px 20px #00000014, 0 0 14px #59ef8e1a;
 }
@@ -5052,13 +5052,13 @@ main > section#services {background: radial-gradient(ellipse at 95% 8%,#a5eab54d
 .services-illustration {max-width: 380px;filter: drop-shadow(0 24px 28px #1235231a)}
 .service-tab {background: #fff;border-color: #12352326;border-radius: 16px;box-shadow: 0 4px 12px #12352303;transition: border-color .2s,background .2s,box-shadow .2s,transform .2s}
 .service-tab .service-icon {background: #e9f4eb;color: #13793c;border-color: #12352326;box-shadow: none}
-.service-tab:not([aria-selected="true"]):hover {border-color: #28c963;background: #f0f9f1;box-shadow: 0 8px 20px #1235230a;transform: translateX(3px)}
-.service-tab[aria-selected="true"] {background: linear-gradient(125deg,#123523,#070c09);border-color: #28c963;box-shadow: 0 12px 28px #12352324}
-.service-tab[aria-selected="true"] .service-icon {background: #28c9631a;color: #a5eab5;border-color: #28c96370}
-.service-tab[aria-selected="true"]::after {background: #28c963;box-shadow: 0 0 12px #28c96352}
-.service-tab[aria-selected="true"] .font-display {color: #f7faf7}
-.service-tab[aria-selected="true"] .text-white\/55 {color: #c2d8c9}
-.service-tab[aria-selected="true"] > span:last-child {color: #a5eab5}
+.service-tab:not([data-active="true"]):hover {border-color: #28c963;background: #f0f9f1;box-shadow: 0 8px 20px #1235230a;transform: translateX(3px)}
+.service-tab[data-active="true"] {background: linear-gradient(125deg,#123523,#070c09);border-color: #28c963;box-shadow: 0 12px 28px #12352324}
+.service-tab[data-active="true"] .service-icon {background: #28c9631a;color: #a5eab5;border-color: #28c96370}
+.service-tab[data-active="true"]::after {background: #28c963;box-shadow: 0 0 12px #28c96352}
+.service-tab[data-active="true"] .font-display {color: #f7faf7}
+.service-tab[data-active="true"] .text-white\/55 {color: #c2d8c9}
+.service-tab[data-active="true"] > span:last-child {color: #a5eab5}
 #service-panel {
   --color-white: #f7faf7;--color-emerald: #a5eab5;--copy: #d6e5da;--muted: #a7c4b1;--strong-copy: #f7faf7;--line: #a5eab52e;
   color: #f7faf7;background: radial-gradient(ellipse at 100% 0%,#28c9631f,transparent 65%),linear-gradient(145deg,#123523,#0b1b12);
@@ -5293,4 +5293,20 @@ footer a:hover {color: #a5eab5}
   #site-header .brand-symbol {width: 44px;height: 44px}
   #home h1 {font-size: 40px}
   .brand-name {font-size: 17px}
+}
+
+/* Inline service details on small screens; desktop retains the split tab panel. */
+.service-meta {display: inline-flex;align-items: center;gap: 10px}
+.service-chevron {display: none;flex-shrink: 0;transition: transform .2s}
+@media(max-width:1023px) {
+  .service-panel-home {display: none}
+  .service-list > .service-tab {width: 100%;scroll-margin-top: 100px}
+  .service-chevron {display: block}
+  .service-tab[aria-expanded="true"] .service-chevron {transform: rotate(180deg)}
+  .service-list > #service-panel {height: auto;border-radius: 16px;padding: 24px;margin-bottom: 8px}
+  .service-list > #service-panel[hidden] {display: none}
+}
+@media(max-width:359px) {
+  .service-meta {gap: 5px}
+  .service-list > #service-panel {padding: 20px}
 }

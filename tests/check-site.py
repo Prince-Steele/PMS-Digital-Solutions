@@ -106,6 +106,38 @@ async def main():
   await expect(page.locator('#enquiry-status')).to_contain_text('Review the draft and press send')
   assert await page.locator('#enquiry-form [aria-invalid="true"]').count()==0
   results.append('Form validation and encoded email/WhatsApp draft actions passed; no messages sent')
+  for width in [320,390,768,1023]:
+   await page.set_viewport_size({'width':width,'height':844})
+   await expect(page.locator('#service-panel')).to_be_hidden()
+   assert await page.locator('[data-service]').evaluate_all('(tabs)=>tabs.every(tab=>tab.tabIndex===0&&!tab.hasAttribute("aria-selected"))')
+   for index in range(4):
+    tab=page.locator(f'[data-service="{index}"]')
+    await tab.click()
+    await expect(tab).to_have_attribute('aria-expanded','true')
+    await expect(page.locator('#service-panel')).to_be_visible()
+    await expect(page.locator('#service-panel')).to_have_attribute('aria-labelledby',['tab-web','tab-ecom','tab-apps','tab-custom'][index])
+    assert await tab.evaluate('(tab)=>tab.nextElementSibling.id==="service-panel"')
+    assert await page.locator('[data-service][aria-expanded="true"]').count()==1
+    assert await page.locator('#service-panel').count()==1
+    assert await page.locator('#service-panel').evaluate('(panel)=>{const p=panel.getBoundingClientRect(),b=panel.previousElementSibling.getBoundingClientRect(),next=panel.nextElementSibling?.getBoundingClientRect();return p.top>=b.bottom&&p.left>=0&&p.right<=innerWidth&&(!next||next.top>=p.bottom)}')
+    if width==390 and index==1:
+     await tab.evaluate('(el)=>el.scrollIntoView({block:"start",behavior:"instant"})')
+     await page.screenshot(path=str(OUT/'mobile-service-accordion.png'))
+   await page.keyboard.press('Enter')
+   await expect(page.locator('#service-panel')).to_be_hidden()
+   await page.keyboard.press('Space')
+   await expect(page.locator('#service-panel')).to_be_visible()
+   await page.keyboard.press('Enter')
+   await expect(page.locator('#service-panel')).to_be_hidden()
+  await page.locator('[data-service="1"]').click()
+  await page.set_viewport_size({'width':1440,'height':1000})
+  await expect(page.locator('#service-panel')).to_have_attribute('role','tabpanel')
+  assert await page.locator('#service-panel').evaluate('(el)=>el.parentElement.classList.contains("service-panel-home")')
+  await page.set_viewport_size({'width':390,'height':844})
+  await expect(page.locator('#service-panel')).to_have_attribute('role','region')
+  await page.locator('#service-panel [data-quote-type]').click()
+  assert (await page.locator('#details').input_value()).startswith('Interested in: E-commerce Solutions')
+  results.append('Mobile service accordion at 320/390/768/1023px: inline details, one open item, toggle/keyboard, responsive panel restoration and enquiry prefill passed')
   await page.set_viewport_size({'width':390,'height':844})
   await page.evaluate('scrollTo(0,0)')
   await page.locator('#menu-toggle').click()
