@@ -1,4 +1,10 @@
-# PM-Digital-Solutions
+# PMS Digital Solutions
+
+## Production hosting
+
+The PMS website is hosted on **Netlify** at [pmsdigitalsolutions.com](https://pmsdigitalsolutions.com), using the `main` branch of [Prince-Steele/PMS-Digital-Solutions](https://github.com/Prince-Steele/PMS-Digital-Solutions). Keep the existing Netlify project and domain connection.
+
+The root `vercel.json` disables automatic Vercel Git deployments for the PMS website. The old Vercel project name `pm-digital-solutions` is not the production hosting target. Historical Vercel failures remain attached to their original commits. IslandTrail and Sterling are separate demo projects with their existing deployment settings.
 
 ## Projects
 
@@ -22,6 +28,6 @@ The visual refinement uses the PMS palette: obsidian `#070C09`, forest `#123523`
 
 To run the browser checks, install Playwright with `python -m pip install playwright`, then run `python tests/check-site.py`. Installed Google Chrome is required. The suite checks layouts from 320 to 1440 px, desktop dropdown and direct mobile navigation, service tabs, portfolio filters, both pricing categories, enquiry prefilling and validation, draft actions, and legacy redirects. Screenshots and results are written to `.local/design-checks`. It sends no messages.
 
-Run `python scripts/measure-performance.py` to measure median FCP, LCP, layout shift, startup blocking time, TTFB, DOM readiness, and transfer size across three cold-cache runs. It includes local desktop and simulated mobile profiles (1.6 Mbps, 150 ms latency, 4x CPU slowdown). The test server compresses text with gzip. Reports are written to `.local/performance.json`. These are local lab measurements; production results depend on hosting, device, and connection quality. No deployment has been made.
+Run `python scripts/measure-performance.py` to measure median FCP, LCP, layout shift, startup blocking time, TTFB, DOM readiness, and transfer size across three cold-cache runs. It includes local desktop and simulated mobile profiles (1.6 Mbps, 150 ms latency, 4x CPU slowdown). The test server compresses text with gzip. Reports are written to `.local/performance.json`. These are local lab measurements; production results depend on hosting, device, and connection quality.
 
 The technology banner pairs local SVG symbols with technology names and a restrained emerald light sweep. Its two matching groups loop continuously, pause offscreen and on hover, and become a manually scrollable static row for reduced-motion visitors. The mobile menu uses direct links, scrolls internally on short screens, traps keyboard focus while open, and restores page access when closed or resized to desktop.
